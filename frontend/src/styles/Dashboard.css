@@ -1,0 +1,326 @@
+/* Minimalist Dashboard Styles */
+body, .dashboard-container {
+  background: linear-gradient(135deg, #f7fafd 0%, #e3f0ff 100%) !important;
+  min-height: 100vh;
+}
+
+.app-bar {
+  background-color: #1976d2 !important;
+  color: white !important;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.dashboard-content {
+  padding: 32px 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  flex: 1;
+  overflow: auto;
+}
+
+.filter-section {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 8px 12px;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.date-range-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.section-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 24px rgba(25, 118, 210, 0.07);
+  padding: 32px 24px 24px 24px;
+  margin-bottom: 32px;
+}
+
+.section-header {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.table-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: calc(100vh - 120px); /* Adjust for navbar and padding */
+  min-height: 300px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(25, 118, 210, 0.07);
+  border: none;
+  margin-bottom: 32px;
+  position: relative;
+  /* Hide scrollbar for Chrome, Safari, Opera */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+.table-container::-webkit-scrollbar {
+  display: none;
+}
+
+.charts-container, .analytics-chart-flex {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(25, 118, 210, 0.07);
+  padding: 32px 16px;
+  margin-bottom: 32px;
+}
+
+.charts-container > div {
+  width: 100%;
+  max-width: 600px;
+  height: 400px;
+}
+
+/* Table Styles */
+.MuiTableCell-root {
+  padding: 12px 16px !important;
+  border: 1px solid #ddd !important;
+  border-bottom: 1px solid #ddd !important;
+}
+
+.MuiTableCell-head {
+  background-color: #1976d2 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  position: sticky !important;
+  top: 0;
+  z-index: 2 !important;
+  border: 1px solid #ddd !important;
+  border-bottom: 1px solid #ddd !important;
+}
+
+.MuiTableCell-head .MuiTypography-subtitle2 {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+.MuiTableCell-head .MuiTypography-caption {
+  font-size: 0.875rem !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-family: 'Noto Sans Devanagari', sans-serif !important;
+}
+
+.MuiTableCell-body .MuiTypography-root {
+  font-size: 0.875rem !important;
+}
+
+.MuiTableCell-body .MuiTypography-caption {
+  font-size: 0.875rem !important;
+  color: rgba(0, 0, 0, 0.7) !important;
+  font-family: 'Noto Sans Devanagari', sans-serif !important;
+  margin-top: 2px;
+}
+
+.MuiTableRow-root:hover {
+  background-color: #e3f0ff !important;
+}
+
+.money-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.amount {
+  font-weight: 500;
+}
+
+.money-details {
+  display: flex;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.advance {
+  color: #4caf50;
+}
+
+.remaining {
+  color: #f44336;
+}
+
+/* Button Styles */
+.MuiButton-root {
+  text-transform: none !important;
+  border-radius: 6px !important;
+  font-size: 0.875rem !important;
+}
+
+.uniform-button {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.07);
+  transition: background 0.2s;
+}
+
+.uniform-button:hover {
+  background: #1565c0 !important;
+}
+
+/* Chart Buttons */
+.chart-button {
+  background-color: #1976d2 !important;
+  color: white !important;
+}
+
+.chart-button:hover {
+  background-color: #1565c0 !important;
+}
+
+.back-button {
+  background-color: #666 !important;
+  color: white !important;
+}
+
+.back-button:hover {
+  background-color: #555 !important;
+}
+
+/* Icons */
+.MuiSvgIcon-root {
+  font-size: 1rem !important;
+}
+
+/* Section header icon style */
+.section-header .MuiSvgIcon-root {
+  color: #26a69a;
+  font-size: 2rem;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 16px;
+  }
+
+  .filter-section {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .date-range-picker {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .date-range-picker .MuiTextField-root {
+    width: 100%;
+  }
+
+  .actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .uniform-button {
+    width: 120px;
+    margin: 4px;
+  }
+
+  .charts-container {
+    height: auto;
+    min-height: 300px;
+  }
+
+  .bilingual-field {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 900px) {
+  .filter-section {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .date-range-picker {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+}
+
+.marathi-text {
+  font-family: 'Noto Sans Devanagari', sans-serif;
+}
+
+/* Form Styles */
+.field-section {
+  margin-bottom: 24px;
+  padding: 16px 0; /* Add padding for better spacing */
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.field-section:last-child {
+  border-bottom: none;
+}
+
+.field-section .MuiTypography-subtitle1 {
+  font-weight: 500;
+  color: #1976d2;
+  text-align: left; /* Ensure titles are aligned consistently */
+  margin-bottom: 8px; /* Space between title and fields */
+}
+
+.bilingual-field {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start; /* Align fields at the top */
+}
+
+.bilingual-field > * {
+  flex: 1 1 0; /* Ensure equal width for bilingual fields */
+  min-width: 0; /* Prevent overflow */
+}
+
+/* Ensure consistent label alignment */
+.MuiTextField-root .MuiInputLabel-root,
+.MuiFormControl-root .MuiInputLabel-root {
+  font-size: 0.9rem;
+  top: 0; /* Align labels consistently */
+}
+
+/* Dialog Content Padding */
+.MuiDialogContent-root {
+  padding: 24px !important;
+}
+
+.analytics-chart-flex {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 48px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 0;
+}
+
+@media (max-width: 900px) {
+  .analytics-chart-flex {
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+}
+
+.MuiChip-root {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+}
