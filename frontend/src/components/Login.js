@@ -1,115 +1,126 @@
 import React, { useState } from 'react';
-import { Card, CardContent, TextField, Button, Typography, Box, Fade } from '@mui/material';
+import {
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Box,
+  IconButton,
+  InputAdornment,
+  Fade,
+  CircularProgress
+} from '@mui/material';
+import {
+  Person,
+  Lock,
+  Visibility,
+  VisibilityOff
+} from '@mui/icons-material';
 import axios from 'axios';
+import '../styles/Login.css';
 
 function Login({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     try {
-      const response = await axios.post('http://127.0.0.1:8080/api/login', { username, password });
+      const response = await axios.post('http://127.0.0.1:8080/api/login', { 
+        username, 
+        password 
+      });
       onLogin(response.data.token, response.data.role);
     } catch (err) {
-      setError('Invalid credentials');
+      setError('Invalid username or password');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        // background: 'linear-gradient(135deg, #2196F3, #21CBF3)', // Gradient background
-        backdropFilter: 'blur(8px)', // Blur effect
-        WebkitBackdropFilter: 'blur(8px)', // For Safari compatibility
-      }}
-    >
-      <Fade in timeout={600}>
-        <Card
-          sx={{
-            maxWidth: 400,
-            width: '100%',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
-            borderRadius: '16px',
-            background: 'rgba(255, 255, 255, 0.9)', // Translucent white
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            p: 3,
-          }}
-        >
+    <Box className="login-wrapper" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: { xs: 1, sm: 2 } }}>
+      <Fade in timeout={800}>
+        <Card className="login-card" sx={{ width: '100%', maxWidth: 400, borderRadius: 3, boxShadow: 3, mx: { xs: 1, sm: 0 } }}>
           <CardContent>
-            <Typography
-              variant="h4"
-              align="center"
-              gutterBottom
-              sx={{ fontWeight: 'bold', color: '#1976D2' }}
-            >
-              Welcome Back
-            </Typography>
-            <Typography
-              variant="subtitle1"
-              align="center"
-              color="text.secondary"
-              sx={{ mb: 3 }}
-            >
-              Sign in to manage customers
-            </Typography>
-            <form onSubmit={handleSubmit}>
+            <Box className="login-header" sx={{ textAlign: 'center', mb: 4 }}>
+              <Typography variant="h4" className="login-title" sx={{ fontWeight: 600, color: 'primary.main', mb: 1, fontSize: { xs: 24, sm: 32 } }}>
+                Welcome
+              </Typography>
+              <Typography variant="subtitle1" className="login-subtitle" sx={{ color: 'text.secondary', fontSize: { xs: 14, sm: 16 } }}>
+                Sign in to Customer Manager System
+              </Typography>
+            </Box>
+
+            <Box component="form" onSubmit={handleSubmit} className="login-form" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label="Username"
                 fullWidth
-                margin="normal"
+                label="Username"
+                variant="outlined"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                  },
+                className="login-input"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Person className="input-icon" />
+                    </InputAdornment>
+                  ),
                 }}
               />
               <TextField
-                label="Password"
-                type="password"
                 fullWidth
-                margin="normal"
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                variant="outlined"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                variant="outlined"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '8px',
-                  },
+                className="login-input"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Lock className="input-icon" />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
                 }}
               />
               {error && (
-                <Typography color="error" align="center" sx={{ mt: 2 }}>
+                <Typography className="error-message" sx={{ color: 'error.main', textAlign: 'center', mt: 1 }}>
                   {error}
                 </Typography>
               )}
               <Button
                 type="submit"
-                variant="contained"
                 fullWidth
-                sx={{
-                  mt: 3,
-                  py: 1.5,
-                  borderRadius: '8px',
-                  backgroundColor: '#1976D2',
-                  '&:hover': { backgroundColor: '#1565C0' },
-                  textTransform: 'none',
-                  fontSize: '1.1rem',
-                }}
+                variant="contained"
+                className="login-button"
+                disabled={loading}
+                sx={{ height: 48, borderRadius: 2, fontSize: 16, fontWeight: 500, mt: 1 }}
               >
-                Sign In
+                {loading ? (
+                  <CircularProgress size={24} className="button-progress" />
+                ) : (
+                  'Sign In'
+                )}
               </Button>
-            </form>
+            </Box>
           </CardContent>
         </Card>
       </Fade>

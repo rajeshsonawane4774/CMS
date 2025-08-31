@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://postgres:admin@db:5432/customer_db
+      - SECRET_KEY=your-secret-key-here
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://backend:8080
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_DB: customer_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
