@@ -16,7 +16,7 @@ CORS(app, resources={r"/api/*": {"origins": ["http://localhost:3000"]}})
 # Database config environment variables - updated names to match Docker Compose standards
 db_user = os.getenv('POSTGRES_USER') or os.getenv('DATABASE_USER') or 'postgres'
 db_password = os.getenv('POSTGRES_PASSWORD') or os.getenv('DATABASE_PASSWORD') or ''
-db_host = os.getenv('POSTGRES_HOST') or os.getenv('DATABASE_HOST') or 'db'  # 'db' matches service name in Docker Compose
+db_host = os.getenv('POSTGRES_HOST') or os.getenv('DATABASE_HOST') or 'localhost'  # 'db' matches service name in Docker Compose
 db_port = os.getenv('POSTGRES_PORT') or os.getenv('DATABASE_PORT') or '5432'
 db_name = os.getenv('POSTGRES_DB') or os.getenv('DATABASE_NAME') or 'customer_db'
 

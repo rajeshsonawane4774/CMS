@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -35,7 +36,8 @@ import {
   Download,
   Logout,
   Search,
-  Close
+  Close,
+  Visibility
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import axios from 'axios';
@@ -47,6 +49,23 @@ import { fieldTranslations } from '../constants/translations';
 import OutstandingAmountChart from './charts/OutstandingAmountChart';
 
 function Dashboard({ token, role, onLogout }) {
+  const navigate = useNavigate();
+  
+  // Helper function to get unique customer entries based on document number only
+  const getUniqueCustomerEntries = (customerList, filterActive = true) => {
+    const uniqueEntries = {};
+    customerList.forEach(customer => {
+      if (!filterActive || customer.mark === 'active') {
+        const docNum = customer.document_number || '';
+        const key = docNum || `${customer.name}_${customer.created_at}`;
+        
+        if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
+          uniqueEntries[key] = customer;
+        }
+      }
+    });
+    return Object.values(uniqueEntries);
+  };
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +90,8 @@ function Dashboard({ token, role, onLogout }) {
     amount_remaining: '',
     work_reason: '',
     work_reason_mr: '',
-    payment_method: ''
+    payment_method: '',
+    created_date: ''
   });
   const [error, setError] = useState(null);
   const [showMonthlyChart, setShowMonthlyChart] = useState(false);
@@ -141,7 +161,8 @@ function Dashboard({ token, role, onLogout }) {
         amount_remaining: customer.amount_remaining,
         work_reason: customer.work_reason,
         work_reason_mr: customer.work_reason_mr || '',
-        payment_method: customer.payment_method
+        payment_method: customer.payment_method,
+        created_date: customer.created_at ? dayjs(customer.created_at).format('YYYY-MM-DD') : ''
       });
     } else {
       setFormData({
@@ -160,7 +181,8 @@ function Dashboard({ token, role, onLogout }) {
         amount_remaining: '',
         work_reason: '',
         work_reason_mr: '',
-        payment_method: ''
+        payment_method: '',
+        created_date: ''
       });
     }
     setOpenDialog(true);
@@ -171,8 +193,10 @@ function Dashboard({ token, role, onLogout }) {
     setCurrentCustomer(null);
     setFormData({
       name: '',
+      name_mr: '',
       phone: '',
       village: '',
+      village_mr: '',
       cts_number: '',
       plot_number: '',
       gat_number: '',
@@ -182,7 +206,9 @@ function Dashboard({ token, role, onLogout }) {
       advance_paid: '',
       amount_remaining: '',
       work_reason: '',
-      payment_method: ''
+      work_reason_mr: '',
+      payment_method: '',
+      created_date: ''
     });
   };
 
@@ -232,29 +258,29 @@ function Dashboard({ token, role, onLogout }) {
     
     try {
       const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
-      await axios.delete(`${API_URL}/api/customers/${id}`, {
+      const response = await axios.delete(`${API_URL}/api/customers/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Update both the main customers array and the filtered customers
-      const updatedCustomers = customers.filter(c => c.id !== id);
-      setCustomers(updatedCustomers);
-      
-      // Update filtered customers based on current search criteria
-      const updatedFiltered = updatedCustomers.filter(customer => {
-        const searchString = searchQuery.toLowerCase();
-        return (
-          customer.name?.toLowerCase().includes(searchString) ||
-          customer.name_mr?.toLowerCase().includes(searchString) ||
-          customer.phone?.toLowerCase().includes(searchString) ||
-          customer.work_reason?.toLowerCase().includes(searchString) ||
-          customer.work_reason_mr?.toLowerCase().includes(searchString)
-        );
-      });
-      setFilteredCustomers(updatedFiltered);
+      if (response.status === 200) {
+        // Refresh the customer list from server
+        const refreshResponse = await axios.get(`${API_URL}/api/customers`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            start_date: startDate?.format('YYYY-MM-DD') || '',
+            end_date: endDate?.format('YYYY-MM-DD') || ''
+          }
+        });
+        setCustomers(refreshResponse.data);
+        alert('Customer deleted successfully');
+      }
     } catch (err) {
-      console.error(err);
-      alert('Error deleting customer. Please try again.');
+      console.error('Delete error:', err);
+      if (err.response?.status === 404) {
+        alert('Customer not found');
+      } else {
+        alert(`Error deleting customer: ${err.response?.data?.error || err.message}`);
+      }
     }
   };
 
@@ -263,44 +289,11 @@ function Dashboard({ token, role, onLogout }) {
     
     let data;
     if (customer) {
-      // For single customer print, get latest active entry for each work
-      const customerEntries = customers.filter(c => c.name === customer.name);
-      
-      // Group by work key and get latest active entry
-      const latestByWork = {};
-      customerEntries.forEach(entry => {
-        const key = [
-          entry.work_reason,
-          entry.cts_number,
-          entry.plot_number,
-          entry.gat_number,
-          entry.document_number
-        ].join('|');
-        if (!latestByWork[key] || new Date(entry.created_at) > new Date(latestByWork[key].created_at)) {
-          latestByWork[key] = entry;
-        }
-      });
-      data = Object.values(latestByWork);
+      // For single customer print, get all entries for that customer
+      data = customers.filter(c => c.name === customer.name && c.mark === 'active');
     } else {
-      // For all customers, get latest active entry for each unique work
-      const latestByWork = {};
-      customers.forEach(entry => {
-        // Only include active entries
-        if (entry.mark !== 'active') return;
-        
-        const key = [
-          entry.name,
-          entry.work_reason,
-          entry.cts_number,
-          entry.plot_number,
-          entry.gat_number,
-          entry.document_number
-        ].join('|');
-        if (!latestByWork[key] || new Date(entry.created_at) > new Date(latestByWork[key].created_at)) {
-          latestByWork[key] = entry;
-        }
-      });
-      data = Object.values(latestByWork);
+      // For all customers print, use the filtered customers (latest active only)
+      data = filteredCustomers;
     }
     
     const htmlContent = `
@@ -324,7 +317,6 @@ function Dashboard({ token, role, onLogout }) {
               <tr>
                 <th>Sr. No.</th>
                 <th>${fieldTranslations.name.en}</th>
-                < Kernan
                 <th>${fieldTranslations.phone.en}</th>
                 <th>${fieldTranslations.village.en}</th>
                 <th>CTS/Plot/GAT</th>
@@ -366,26 +358,7 @@ function Dashboard({ token, role, onLogout }) {
   };
 
   const handleExportExcel = () => {
-    // Get latest active entry for each unique work
-    const latestByWork = {};
-    customers.forEach(entry => {
-      // Only include active entries
-      if (entry.mark !== 'active') return;
-      
-      const key = [
-        entry.name,
-        entry.work_reason,
-        entry.cts_number,
-        entry.plot_number,
-        entry.gat_number,
-        entry.document_number
-      ].join('|');
-      if (!latestByWork[key] || new Date(entry.created_at) > new Date(latestByWork[key].created_at)) {
-        latestByWork[key] = entry;
-      }
-    });
-    
-    const csvData = Object.values(latestByWork).map((c, index) => ({
+    const csvData = filteredCustomers.map((c, index) => ({
       'Sr. No.': index + 1,
       [fieldTranslations.name.en]: c.name,
       [fieldTranslations.phone.en]: c.phone || '',
@@ -408,16 +381,21 @@ function Dashboard({ token, role, onLogout }) {
     link.click();
   };
 
-  // Update filtered customers whenever the search query or customers list changes
+  // Update filtered customers to show unique entries based on document number and work reason
   useEffect(() => {
-    const filtered = customers.filter(customer => {
+    const uniqueCustomers = getUniqueCustomerEntries(customers);
+    
+    // Apply search filter
+    const filtered = uniqueCustomers.filter(customer => {
       const searchLower = searchQuery.toLowerCase();
       const nameMatch = (customer.name || '').toLowerCase().includes(searchLower);
       const workReasonMatch = (customer.work_reason || '').toLowerCase().includes(searchLower);
       const phoneMatch = (customer.phone || '').toLowerCase().includes(searchLower);
       const villageMatch = (customer.village || '').toLowerCase().includes(searchLower);
-      return nameMatch || workReasonMatch || phoneMatch || villageMatch;
+      const docMatch = (customer.document_number || '').toLowerCase().includes(searchLower);
+      return nameMatch || workReasonMatch || phoneMatch || villageMatch || docMatch;
     });
+    
     setFilteredCustomers(filtered);
   }, [customers, searchQuery]);
 
@@ -575,9 +553,26 @@ function Dashboard({ token, role, onLogout }) {
         {/* Table Section - make container responsive */}
         {/* Only render the main customer table when showCharts is false */}
         {!showMonthlyChart && (
-          <Paper elevation={3} className="table-container" sx={{ width: '100%', overflowX: 'auto' }}>
+          <Paper elevation={3} className="table-container" sx={{ width: '100%', overflowX: 'auto', borderRadius: 0 }}>
             <Table sx={{ minWidth: 800, width: '100%', tableLayout: 'auto' }}>
               <TableHead>
+                <TableRow>
+                  <TableCell>1</TableCell>
+                  <TableCell>2</TableCell>
+                  <TableCell>3</TableCell>
+                  <TableCell>4</TableCell>
+                  <TableCell>5</TableCell>
+                  <TableCell>6</TableCell>
+                  <TableCell>7</TableCell>
+                  <TableCell>8</TableCell>
+                  <TableCell>9</TableCell>
+                  <TableCell>10</TableCell>
+                  <TableCell>11</TableCell>
+                  <TableCell>12</TableCell>
+                  <TableCell>13</TableCell>
+                  <TableCell>14</TableCell>
+                  <TableCell>15</TableCell>
+                </TableRow>
                 <TableRow>
                   <TableCell>Sr. No<br/>क्रमांक</TableCell>
                   <TableCell>{fieldTranslations.name.en}<br/>{fieldTranslations.name.mr}</TableCell>
@@ -611,7 +606,11 @@ function Dashboard({ token, role, onLogout }) {
                   </TableRow>
                 ) : (
                   filteredCustomers.map((customer, index) => (
-                    <TableRow key={customer.id}>
+                    <TableRow 
+                      key={customer.id} 
+                      onClick={() => navigate(`/customer/${customer.id}?docNumber=${encodeURIComponent(customer.document_number || '')}&name=${encodeURIComponent(customer.name)}`)} 
+                      sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f5f5f5' } }}
+                    >
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>
                         {customer.name}<br/>{customer.name_mr}
@@ -639,14 +638,17 @@ function Dashboard({ token, role, onLogout }) {
                       <TableCell>{customer.modified_at ? new Date(customer.modified_at).toLocaleString() : ''}</TableCell>
                       <TableCell>{customer.created_at ? new Date(customer.created_at).toLocaleString() : ''}</TableCell>
                       <TableCell>
-                        <IconButton onClick={() => handlePrint(customer)} title="Print all entries for this customer">
+                        <IconButton onClick={(e) => { e.stopPropagation(); navigate(`/customer/${customer.id}?docNumber=${encodeURIComponent(customer.document_number || '')}&name=${encodeURIComponent(customer.name)}`); }} title="View document payment history">
+                          <Visibility />
+                        </IconButton>
+                        <IconButton onClick={(e) => { e.stopPropagation(); handlePrint(customer); }} title="Print all entries for this customer">
                           <Print />
                         </IconButton>
-                        <IconButton onClick={() => handleOpenDialog(customer)} title="Edit customer">
+                        <IconButton onClick={(e) => { e.stopPropagation(); handleOpenDialog(customer); }} title="Edit customer">
                           <Edit />
                         </IconButton>
                         {role === 'superadmin' && (
-                          <IconButton onClick={() => handleDelete(customer.id)} title="Delete customer">
+                          <IconButton onClick={(e) => { e.stopPropagation(); handleDelete(customer.id); }} title="Delete customer">
                             <Delete />
                           </IconButton>
                         )}
@@ -840,9 +842,9 @@ function Dashboard({ token, role, onLogout }) {
                 </Typography>
                 <TextField
                   label={`${fieldTranslations.cost.en} / ${fieldTranslations.cost.mr}`}
-                  type="number"
                   value={formData.estimated_cost}
                   onChange={(e) => handleFormChange('estimated_cost', e.target.value)}
+                  inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
                   fullWidth
                   margin="normal"
                   disabled={role !== 'superadmin' && currentCustomer}
@@ -856,12 +858,12 @@ function Dashboard({ token, role, onLogout }) {
                 </Typography>
                 <TextField
                   label={`${fieldTranslations.advance.en} / ${fieldTranslations.advance.mr}`}
-                  type="number"
                   value={formData.advance_paid}
                   onChange={(e) => handleFormChange('advance_paid', e.target.value)}
+                  inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
                   fullWidth
                   margin="normal"
-                  disabled={role !== 'superadmin' && currentCustomer}
+                  disabled={currentCustomer && role !== 'superadmin'}
                 />
               </Box>
 
@@ -876,7 +878,7 @@ function Dashboard({ token, role, onLogout }) {
                   InputProps={{ readOnly: true }}
                   fullWidth
                   margin="normal"
-                  disabled={role !== 'superadmin' && currentCustomer}
+                  disabled
                 />
               </Box>
 
@@ -898,6 +900,22 @@ function Dashboard({ token, role, onLogout }) {
                   </Select>
                 </FormControl>
               </Box>
+
+              {/* Created Date Section */}
+              <Box className="field-section">
+                <Typography variant="subtitle1" gutterBottom>
+                  Created Date / तयार केल्याची तारीख
+                </Typography>
+                <TextField
+                  label="Created Date / तयार केल्याची तारीख"
+                  type="date"
+                  value={formData.created_date}
+                  onChange={(e) => handleFormChange('created_date', e.target.value)}
+                  fullWidth
+                  margin="normal"
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Box>
             </Box>
           </DialogContent>
           <DialogActions>
@@ -908,34 +926,29 @@ function Dashboard({ token, role, onLogout }) {
           </DialogActions>
         </Dialog>
 
-        <Dialog 
-          open={showMonthlyChart} 
-          onClose={() => setShowMonthlyChart(false)} 
-          maxWidth={false} 
-          fullWidth 
-          fullScreen
-          PaperProps={{
-            sx: {
-              bgcolor: '#f5f5f5'
-            }
-          }}
-        >
-          <DialogTitle sx={{ 
-            bgcolor: 'primary.main', 
-            color: 'white',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
+        {showMonthlyChart && (
+          <Box sx={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            width: '100vw', 
+            height: '100vh', 
+            bgcolor: '#f5f5f5', 
+            zIndex: 9999,
+            overflow: 'auto'
           }}>
-            <Typography variant="h6">Analytics Dashboard</Typography>
-            <IconButton 
-              onClick={() => setShowMonthlyChart(false)}
-              sx={{ color: 'white' }}
-            >
-              <Close />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent sx={{ p: 3 }}>
+            <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
+              <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6">Analytics Dashboard</Typography>
+                <IconButton 
+                  onClick={() => setShowMonthlyChart(false)}
+                  sx={{ color: 'white' }}
+                >
+                  <Close />
+                </IconButton>
+              </Toolbar>
+            </AppBar>
+            <Box sx={{ p: 3 }}>
             <Grid container spacing={3}>
               {/* Left side - Customer Details */}
               <Grid item xs={12} md={6}>
@@ -943,7 +956,21 @@ function Dashboard({ token, role, onLogout }) {
                   <Typography variant="h6" sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     Outstanding Amounts by Customer
                     <Typography variant="body2" color="textSecondary">
-                      {customers.filter(c => c.mark === 'active' && c.amount_remaining > 0).length} Customers
+{(() => {
+                        const uniqueEntries = {};
+                        customers.forEach(customer => {
+                          if (customer.mark === 'active' && customer.amount_remaining > 0) {
+                            const docNum = customer.document_number || '';
+                            const workReason = customer.work_reason || '';
+                            const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
+                            
+                            if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
+                              uniqueEntries[key] = customer;
+                            }
+                          }
+                        });
+                        return Object.keys(uniqueEntries).length;
+                      })()} Customers
                     </Typography>
                   </Typography>
                   <TableContainer sx={{ maxHeight: 'calc(100vh - 250px)', overflow: 'auto' }}>
@@ -955,14 +982,27 @@ function Dashboard({ token, role, onLogout }) {
                           <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }}>Phone Number</TableCell>
                           <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }} align="right">Estimated Cost (₹)</TableCell>
                           <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }} align="right">Remaining Amount (₹)</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }}>Actions</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {customers
-                          .filter(c => c.mark === 'active' && c.amount_remaining > 0)
-                          .sort((a, b) => b.amount_remaining - a.amount_remaining)
-                          .map((customer) => (
+                        {(() => {
+                          // Get unique entries with outstanding amounts
+                          const uniqueEntries = {};
+                          customers.forEach(customer => {
+                            if (customer.mark === 'active' && customer.amount_remaining > 0) {
+                              const docNum = customer.document_number || '';
+                              const workReason = customer.work_reason || '';
+                              const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
+                              
+                              if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
+                                uniqueEntries[key] = customer;
+                              }
+                            }
+                          });
+                          
+                          return Object.values(uniqueEntries)
+                            .sort((a, b) => b.amount_remaining - a.amount_remaining)
+                            .map((customer) => (
                             <TableRow key={customer.id} hover>
                               <TableCell>{customer.name}</TableCell>
                               <TableCell>{customer.work_reason}</TableCell>
@@ -971,13 +1011,9 @@ function Dashboard({ token, role, onLogout }) {
                               <TableCell align="right" sx={{ color: 'error.main', fontWeight: 'bold' }}>
                                 ₹{Number(customer.amount_remaining).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                               </TableCell>
-                              <TableCell>
-                                <IconButton onClick={() => handleDelete(customer.id)} title="Delete customer">
-                                  <Delete />
-                                </IconButton>
-                              </TableCell>
                             </TableRow>
-                          ))}
+                          ));
+                        })()}
                       </TableBody>
                     </Table>
                   </TableContainer>
@@ -993,7 +1029,21 @@ function Dashboard({ token, role, onLogout }) {
                         <div className="table-title">
                           Summary by Work Type
                           <span className="customer-count">
-                            Total Categories: {Object.keys(customers.filter(c => c.mark === 'active').reduce((acc, curr) => ({ ...acc, [curr.work_reason]: true }), {})).length}
+  Total Categories: {(() => {
+                            const uniqueEntries = {};
+                            customers.forEach(customer => {
+                              if (customer.mark === 'active') {
+                                const docNum = customer.document_number || '';
+                                const workReason = customer.work_reason || '';
+                                const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
+                                
+                                if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
+                                  uniqueEntries[key] = customer;
+                                }
+                              }
+                            });
+                            return Object.keys(Object.values(uniqueEntries).reduce((acc, curr) => ({ ...acc, [curr.work_reason]: true }), {})).length;
+                          })()}
                           </span>
                         </div>
                       </div>
@@ -1009,21 +1059,33 @@ function Dashboard({ token, role, onLogout }) {
                           </TableHead>
                           <TableBody>
                             {(() => {
-                              const workReasonSummary = {};
-                              customers
-                                .filter(c => c.mark === 'active')
-                                .forEach(customer => {
-                                  if (!workReasonSummary[customer.work_reason]) {
-                                    workReasonSummary[customer.work_reason] = {
-                                      totalAmount: 0,
-                                      pendingAmount: 0,
-                                      customerCount: 0
-                                    };
+                              // Get unique entries for summary
+                              const uniqueEntries = {};
+                              customers.forEach(customer => {
+                                if (customer.mark === 'active') {
+                                  const docNum = customer.document_number || '';
+                                  const workReason = customer.work_reason || '';
+                                  const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
+                                  
+                                  if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
+                                    uniqueEntries[key] = customer;
                                   }
-                                  workReasonSummary[customer.work_reason].totalAmount += Number(customer.estimated_cost);
-                                  workReasonSummary[customer.work_reason].pendingAmount += Number(customer.amount_remaining);
-                                  workReasonSummary[customer.work_reason].customerCount++;
-                                });
+                                }
+                              });
+                              
+                              const workReasonSummary = {};
+                              Object.values(uniqueEntries).forEach(customer => {
+                                if (!workReasonSummary[customer.work_reason]) {
+                                  workReasonSummary[customer.work_reason] = {
+                                    totalAmount: 0,
+                                    pendingAmount: 0,
+                                    customerCount: 0
+                                  };
+                                }
+                                workReasonSummary[customer.work_reason].totalAmount += Number(customer.estimated_cost);
+                                workReasonSummary[customer.work_reason].pendingAmount += Number(customer.amount_remaining);
+                                workReasonSummary[customer.work_reason].customerCount++;
+                              });
                               
                               return Object.entries(workReasonSummary)
                                 .sort((a, b) => b[1].pendingAmount - a[1].pendingAmount)
@@ -1048,15 +1110,27 @@ function Dashboard({ token, role, onLogout }) {
                       <Typography variant="h6" sx={{ mb: 2 }}>Outstanding Distribution</Typography>
                       <OutstandingAmountChart
                         data={(() => {
-                          const workReasonSummary = {};
-                          customers
-                            .filter(c => c.mark === 'active' && c.amount_remaining > 0)
-                            .forEach(customer => {
-                              if (!workReasonSummary[customer.work_reason]) {
-                                workReasonSummary[customer.work_reason] = 0;
+                          // Get unique entries with outstanding amounts
+                          const uniqueEntries = {};
+                          customers.forEach(customer => {
+                            if (customer.mark === 'active' && customer.amount_remaining > 0) {
+                              const docNum = customer.document_number || '';
+                              const workReason = customer.work_reason || '';
+                              const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
+                              
+                              if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
+                                uniqueEntries[key] = customer;
                               }
-                              workReasonSummary[customer.work_reason] += Number(customer.amount_remaining);
-                            });
+                            }
+                          });
+                          
+                          const workReasonSummary = {};
+                          Object.values(uniqueEntries).forEach(customer => {
+                            if (!workReasonSummary[customer.work_reason]) {
+                              workReasonSummary[customer.work_reason] = 0;
+                            }
+                            workReasonSummary[customer.work_reason] += Number(customer.amount_remaining);
+                          });
                           
                           return Object.entries(workReasonSummary)
                             .sort((a, b) => b[1] - a[1])
@@ -1071,8 +1145,9 @@ function Dashboard({ token, role, onLogout }) {
                 </Grid>
               </Grid>
             </Grid>
-          </DialogContent>
-        </Dialog>
+            </Box>
+          </Box>
+        )}
 
       </Box>
     </Fade>
@@ -1086,3 +1161,7 @@ Dashboard.propTypes = {
 };
 
 export default Dashboard;
+
+
+// -------------------------------------------------------------------------------------------------------------------------------
+

@@ -52,14 +52,11 @@ def get_customers():
 
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
-    all_entries = request.args.get('all_entries', 'false').lower() == 'true'
     search_phone = request.args.get('phone')
     search_village = request.args.get('village')
-
-    if all_entries:
-        query = Customer.query  # No mark filter
-    else:
-        query = Customer.query.filter_by(mark='active')
+    
+    # Get all records including history
+    query = Customer.query
 
     # Apply date range filter only if both start_date and end_date are provided
     if start_date and end_date and start_date.strip() and end_date.strip():
@@ -91,7 +88,33 @@ def add_customer():
         return jsonify({'error': 'Invalid or expired token'}), 401
 
     data = request.get_json()
-    unique_id = f"{data['name']}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    # Create unique_id based on document_number and timestamp for uniqueness
+    doc_num = data.get('document_number', '').strip()
+    if doc_num:
+        unique_id = f"{doc_num}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    else:
+        unique_id = f"{data['name']}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    
+    # Validate that at least one of gat_number, plot_number, or cts_number is provided
+    gat = data.get('gat_number', '').strip()
+    plot = data.get('plot_number', '').strip()
+    cts = data.get('cts_number', '').strip()
+    
+    if not any([gat, plot, cts]):
+        return jsonify({'error': 'At least one of gat number, plot number, or CTS number must be provided'}), 400
+    
+    # Use manual date if provided, otherwise current date and time
+    created_date = data.get('created_date')
+    if created_date and created_date.strip():
+        try:
+            manual_date = datetime.strptime(created_date, '%Y-%m-%d')
+            current_time = datetime.now()
+            created_at = manual_date.replace(hour=current_time.hour, minute=current_time.minute, second=current_time.second, microsecond=current_time.microsecond)
+        except ValueError:
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD.'}), 400
+    else:
+        created_at = datetime.now()
     
     customer = Customer(
         name=data['name'],
@@ -111,8 +134,8 @@ def add_customer():
         work_reason_mr=data.get('work_reason_mr', ''),
         payment_method=data.get('payment_method', ''),
         unique_id=unique_id,
-        created_at=datetime.utcnow(),
-        modified_at=datetime.utcnow()
+        created_at=created_at,
+        modified_at=None
     )
     
     db.session.add(customer)
@@ -132,71 +155,117 @@ def update_customer(id):
 
     old_customer = Customer.query.get_or_404(id)
     data = request.get_json()
-    current_time = datetime.utcnow()
+    current_time = datetime.now()
 
-    # Handle empty advance_paid value
+    # Handle settlement payment (when advance_paid is provided as additional payment)
     advance_paid = data.get('advance_paid')
     if advance_paid == '' or advance_paid is None:
         advance_paid = 0
+    else:
+        advance_paid = float(advance_paid)
 
-    # Calculate remaining amount
-    estimated_cost = data.get('estimated_cost', old_customer.estimated_cost)
-    amount_remaining = float(estimated_cost) - float(advance_paid)
-
-    unique_id = f"{data.get('name', old_customer.name).strip()}_{current_time.strftime('%Y%m%d%H%M%S')}"
-
-    # Create new customer with reference to parent
-    new_customer = Customer(
-        name=data.get('name', old_customer.name),
-        name_mr=data.get('name_mr', old_customer.name_mr),
-        phone=data.get('phone', old_customer.phone),
-        village=data.get('village', old_customer.village),
-        village_mr=data.get('village_mr', old_customer.village_mr),
-        cts_number=data.get('cts_number', old_customer.cts_number),
-        plot_number=data.get('plot_number', old_customer.plot_number),
-        gat_number=data.get('gat_number', old_customer.gat_number),
-        document_number=data.get('document_number', old_customer.document_number),
-        submitted_by=data.get('submitted_by', old_customer.submitted_by),
-        estimated_cost=estimated_cost,
-        advance_paid=advance_paid,
-        amount_remaining=amount_remaining,
-        work_reason=data.get('work_reason', old_customer.work_reason),
-        work_reason_mr=data.get('work_reason_mr', old_customer.work_reason_mr),
-        payment_method=data.get('payment_method', old_customer.payment_method),
-        unique_id=unique_id,  # Set the unique_id here
-        parent_id=old_customer.id,
-        created_at=current_time,
-        modified_at=current_time,
-        mark='active'
-    )
-
-    try:
-        # Mark old record as inactive
-        old_customer.mark = 'inactive'
+    # Check if this is a settlement (additional payment)
+    is_settlement = advance_paid > 0 and 'estimated_cost' not in data
+    
+    if is_settlement:
+        # For settlement, create a new payment history entry
+        new_total_advance = float(old_customer.advance_paid or 0) + advance_paid
+        new_remaining = float(old_customer.estimated_cost or 0) - new_total_advance
         
-        # Add and commit both changes
-        db.session.add(new_customer)
+        # Create new payment history record with unique ID
+        new_unique_id = f"{old_customer.unique_id}_payment_{current_time.strftime('%Y%m%d%H%M%S')}"
+        
+        payment_record = Customer(
+            name=old_customer.name,
+            name_mr=old_customer.name_mr,
+            phone=old_customer.phone,
+            village=old_customer.village,
+            village_mr=old_customer.village_mr,
+            cts_number=old_customer.cts_number,
+            plot_number=old_customer.plot_number,
+            gat_number=old_customer.gat_number,
+            document_number=old_customer.document_number,
+            submitted_by=old_customer.submitted_by,
+            estimated_cost=old_customer.estimated_cost,
+            advance_paid=new_total_advance,
+            amount_remaining=new_remaining,
+            work_reason=old_customer.work_reason,
+            work_reason_mr=old_customer.work_reason_mr,
+            payment_method=data.get('payment_method', old_customer.payment_method),
+            unique_id=new_unique_id,
+            created_at=current_time,
+            modified_at=None,
+            mark='active',
+            parent_id=old_customer.id
+        )
+        
+        # Mark the old record as history
+        old_customer.mark = 'history'
+        old_customer.modified_at = current_time
+        
+        db.session.add(payment_record)
         db.session.commit()
+        return jsonify(customer_to_dict(payment_record))
+    else:
+        # Regular update - update all fields
+        estimated_cost = data.get('estimated_cost', old_customer.estimated_cost)
+        if 'advance_paid' in data:
+            total_advance_paid = advance_paid
+        else:
+            total_advance_paid = old_customer.advance_paid
         
-        return jsonify(customer_to_dict(new_customer))
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        amount_remaining = float(estimated_cost) - float(total_advance_paid or 0)
+        
+        # Update the record
+        old_customer.name = data.get('name', old_customer.name)
+        old_customer.name_mr = data.get('name_mr', old_customer.name_mr)
+        old_customer.phone = data.get('phone', old_customer.phone)
+        old_customer.village = data.get('village', old_customer.village)
+        old_customer.village_mr = data.get('village_mr', old_customer.village_mr)
+        old_customer.cts_number = data.get('cts_number', old_customer.cts_number)
+        old_customer.plot_number = data.get('plot_number', old_customer.plot_number)
+        old_customer.gat_number = data.get('gat_number', old_customer.gat_number)
+        old_customer.document_number = data.get('document_number', old_customer.document_number)
+        old_customer.submitted_by = data.get('submitted_by', old_customer.submitted_by)
+        old_customer.estimated_cost = estimated_cost
+        old_customer.advance_paid = total_advance_paid
+        old_customer.amount_remaining = amount_remaining
+        old_customer.work_reason = data.get('work_reason', old_customer.work_reason)
+        old_customer.work_reason_mr = data.get('work_reason_mr', old_customer.work_reason_mr)
+        old_customer.payment_method = data.get('payment_method', old_customer.payment_method)
+        old_customer.modified_at = current_time
+        
+        db.session.commit()
+        return jsonify(customer_to_dict(old_customer))
 
 @customers_bp.route('/customers/<int:id>', methods=['DELETE'])
 def delete_customer(id):
     token = request.headers.get('Authorization')
     if not token or len(token.split()) != 2:
         return jsonify({'error': 'Authorization header missing or invalid'}), 401
+
     token = token.split()[1]
     payload = verify_token(token)
     if not payload:
         return jsonify({'error': 'Invalid or expired token'}), 401
 
-    customer = Customer.query.get_or_404(id)
-    customer.mark = 'deleted'
-    db.session.commit()
-    return jsonify({'message': 'Customer marked as deleted'})
+    try:
+        customer = Customer.query.get_or_404(id)
+        
+        # First, delete any child records that reference this customer
+        child_customers = Customer.query.filter_by(parent_id=id).all()
+        for child in child_customers:
+            db.session.delete(child)
+        
+        # Then delete the main customer record
+        db.session.delete(customer)
+        db.session.commit()
+        return jsonify({'message': 'Customer deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Delete error: {str(e)}")  # Debug log
+        return jsonify({'error': f'Failed to delete customer {id}. {str(e)}'}), 500
+
 
 @customers_bp.route('/customers/monthly-stats', methods=['GET'])
 def get_monthly_stats():

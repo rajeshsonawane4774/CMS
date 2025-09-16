@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
+import CustomerDetails from './components/CustomerDetails';
 import RemainingAmountsTables from './components/charts/RemainingAmountsTables';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -123,6 +124,12 @@ function App() {
             path="/dashboard"
             element={
               token ? <Dashboard token={token} role={role} onLogout={handleLogout} /> : <Navigate to="/login" />
+            }
+          />
+          <Route
+            path="/customer/:customerId"
+            element={
+              token ? <CustomerDetails token={token} /> : <Navigate to="/login" />
             }
           />
           <Route path="/remaining-amounts" element={<RemainingAmountsTables />} />

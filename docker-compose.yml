@@ -12,6 +12,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:admin@db:5432/customer_db
       - SECRET_KEY=your-secret-key-here
+      - TZ=Asia/Kolkata
 
   frontend:
     build:
@@ -21,6 +22,7 @@ services:
       - "3000:3000"
     environment:
       - REACT_APP_API_URL=http://backend:8080
+      - TZ=Asia/Kolkata
     depends_on:
       - backend
 
@@ -31,6 +33,7 @@ services:
       POSTGRES_DB: customer_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
+      TZ: Asia/Kolkata
     ports:
       - "5432:5432"
     volumes:

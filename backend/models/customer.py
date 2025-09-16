@@ -24,7 +24,7 @@ class Customer(db.Model):
     payment_method = db.Column(db.String(50))
     unique_id = db.Column(db.String(100), unique=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    modified_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    modified_at = Column(DateTime, onupdate=datetime.utcnow, nullable=True)
     mark = db.Column(db.String(20), default='active')
     parent_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=True)
     

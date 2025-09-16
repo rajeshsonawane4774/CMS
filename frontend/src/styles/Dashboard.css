@@ -59,7 +59,7 @@ body, .dashboard-container {
   max-height: calc(100vh - 120px); /* Adjust for navbar and padding */
   min-height: 300px;
   background: #fff;
-  border-radius: 14px;
+  border-radius: 0;
   box-shadow: 0 2px 12px rgba(25, 118, 210, 0.07);
   border: none;
   margin-bottom: 32px;
