@@ -557,38 +557,21 @@ function Dashboard({ token, role, onLogout }) {
             <Table sx={{ minWidth: 800, width: '100%', tableLayout: 'auto' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>1</TableCell>
-                  <TableCell>2</TableCell>
-                  <TableCell>3</TableCell>
-                  <TableCell>4</TableCell>
-                  <TableCell>5</TableCell>
-                  <TableCell>6</TableCell>
-                  <TableCell>7</TableCell>
-                  <TableCell>8</TableCell>
-                  <TableCell>9</TableCell>
-                  <TableCell>10</TableCell>
-                  <TableCell>11</TableCell>
-                  <TableCell>12</TableCell>
-                  <TableCell>13</TableCell>
-                  <TableCell>14</TableCell>
-                  <TableCell>15</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>Sr. No<br/>क्रमांक</TableCell>
-                  <TableCell>{fieldTranslations.name.en}<br/>{fieldTranslations.name.mr}</TableCell>
-                  <TableCell>{fieldTranslations.phone.en}<br/>{fieldTranslations.phone.mr}</TableCell>
-                  <TableCell>{fieldTranslations.village.en}<br/>{fieldTranslations.village.mr}</TableCell>
-                  <TableCell>CTS/Plot/GAT<br/>सीटीएस/प्लॉट/गट</TableCell>
-                  <TableCell>{fieldTranslations.document_number.en}<br/>{fieldTranslations.document_number.mr}</TableCell>
-                  <TableCell>{fieldTranslations.submitted_by.en}<br/>{fieldTranslations.submitted_by.mr}</TableCell>
-                  <TableCell>{fieldTranslations.cost.en}<br/>{fieldTranslations.cost.mr}</TableCell>
-                  <TableCell>{fieldTranslations.advance.en}<br/>{fieldTranslations.advance.mr}</TableCell>
-                  <TableCell>{fieldTranslations.remaining.en}<br/>{fieldTranslations.remaining.mr}</TableCell>
-                  <TableCell>{fieldTranslations.reason.en}<br/>{fieldTranslations.reason.mr}</TableCell>
-                  <TableCell>{fieldTranslations.payment.en}<br/>{fieldTranslations.payment.mr}</TableCell>
-                  <TableCell>Modified Date</TableCell>
-                  <TableCell>Created Date</TableCell>
-                  <TableCell>{fieldTranslations.actions.en}<br/>{fieldTranslations.actions.mr}</TableCell>
+                  <TableCell>Sr. No<br/>क्रमांक<br/>1</TableCell>
+                  <TableCell>{fieldTranslations.name.en}<br/>{fieldTranslations.name.mr}<br/>2</TableCell>
+                  <TableCell>{fieldTranslations.phone.en}<br/>{fieldTranslations.phone.mr}<br/>3</TableCell>
+                  <TableCell>{fieldTranslations.village.en}<br/>{fieldTranslations.village.mr}<br/>4</TableCell>
+                  <TableCell>CTS/Plot/GAT<br/>सीटीएस/प्लॉट/गट<br/>5</TableCell>
+                  <TableCell>{fieldTranslations.document_number.en}<br/>{fieldTranslations.document_number.mr}<br/>6</TableCell>
+                  <TableCell>{fieldTranslations.submitted_by.en}<br/>{fieldTranslations.submitted_by.mr}<br/>7</TableCell>
+                  <TableCell>{fieldTranslations.cost.en}<br/>{fieldTranslations.cost.mr}<br/>8</TableCell>
+                  <TableCell>{fieldTranslations.advance.en}<br/>{fieldTranslations.advance.mr}<br/>9</TableCell>
+                  <TableCell>{fieldTranslations.remaining.en}<br/>{fieldTranslations.remaining.mr}<br/>10</TableCell>
+                  <TableCell>{fieldTranslations.reason.en}<br/>{fieldTranslations.reason.mr}<br/>11</TableCell>
+                  <TableCell>{fieldTranslations.payment.en}<br/>{fieldTranslations.payment.mr}<br/>12</TableCell>
+                  <TableCell>Modified Date<br/>13</TableCell>
+                  <TableCell>Created Date<br/>14</TableCell>
+                  <TableCell>{fieldTranslations.actions.en}<br/>{fieldTranslations.actions.mr}<br/>15</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -620,11 +603,11 @@ function Dashboard({ token, role, onLogout }) {
                         {customer.village}<br/>{customer.village_mr}
                       </TableCell>
                       <TableCell>
-                        {customer.cts_number && `CTS: ${customer.cts_number}`}
+                        {customer.cts_number && `CTS: ${customer.cts_number.replace(/^CTS-?/i, '')}`}
                         {customer.plot_number && customer.cts_number && <br/>}
-                        {customer.plot_number && `Plot: ${customer.plot_number}`}
+                        {customer.plot_number && `Plot: ${customer.plot_number.replace(/^Plot-?/i, '')}`}
                         {(customer.cts_number || customer.plot_number) && customer.gat_number && <br/>}
-                        {customer.gat_number && `GAT: ${customer.gat_number}`}
+                        {customer.gat_number && `GAT: ${customer.gat_number.replace(/^GAT-?/i, '')}`}
                       </TableCell>
                       <TableCell>{customer.document_number}</TableCell>
                       <TableCell>{customer.submitted_by}</TableCell>

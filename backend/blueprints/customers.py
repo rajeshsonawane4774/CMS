@@ -172,8 +172,19 @@ def update_customer(id):
         new_total_advance = float(old_customer.advance_paid or 0) + advance_paid
         new_remaining = float(old_customer.estimated_cost or 0) - new_total_advance
         
+        # Use manual date if provided, otherwise current date and time
+        created_date = data.get('created_date')
+        if created_date and created_date.strip():
+            try:
+                manual_date = datetime.strptime(created_date, '%Y-%m-%d')
+                settlement_time = manual_date.replace(hour=current_time.hour, minute=current_time.minute, second=current_time.second, microsecond=current_time.microsecond)
+            except ValueError:
+                settlement_time = current_time
+        else:
+            settlement_time = current_time
+        
         # Create new payment history record with unique ID
-        new_unique_id = f"{old_customer.unique_id}_payment_{current_time.strftime('%Y%m%d%H%M%S')}"
+        new_unique_id = f"{old_customer.unique_id}_payment_{settlement_time.strftime('%Y%m%d%H%M%S')}"
         
         payment_record = Customer(
             name=old_customer.name,
@@ -193,7 +204,7 @@ def update_customer(id):
             work_reason_mr=old_customer.work_reason_mr,
             payment_method=data.get('payment_method', old_customer.payment_method),
             unique_id=new_unique_id,
-            created_at=current_time,
+            created_at=settlement_time,
             modified_at=None,
             mark='active',
             parent_id=old_customer.id

@@ -28,6 +28,7 @@ import { ArrowBack, Print, Edit } from '@mui/icons-material';
 import axios from 'axios';
 
 function CustomerDetails({ token }) {
+  const role = localStorage.getItem('role');
   const { customerId } = useParams();
   const navigate = useNavigate();
   const [customerHistory, setCustomerHistory] = useState([]);
@@ -37,6 +38,7 @@ function CustomerDetails({ token }) {
   const [currentRecord, setCurrentRecord] = useState(null);
   const [settlementAmount, setSettlementAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [settlementDate, setSettlementDate] = useState('');
 
   useEffect(() => {
     const fetchCustomerHistory = async () => {
@@ -91,6 +93,7 @@ function CustomerDetails({ token }) {
     setCurrentRecord(record);
     setSettlementAmount('');
     setPaymentMethod(record.payment_method || '');
+    setSettlementDate(new Date().toISOString().split('T')[0]);
     setOpenDialog(true);
   };
 
@@ -99,6 +102,7 @@ function CustomerDetails({ token }) {
     setCurrentRecord(null);
     setSettlementAmount('');
     setPaymentMethod('');
+    setSettlementDate('');
   };
 
   const handleSettlement = async () => {
@@ -108,7 +112,8 @@ function CustomerDetails({ token }) {
         `${API_URL}/api/customers/${currentRecord.id}`,
         {
           advance_paid: settlementAmount,
-          payment_method: paymentMethod
+          payment_method: paymentMethod,
+          created_date: settlementDate
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -216,22 +221,22 @@ function CustomerDetails({ token }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Sr. No.<br/>क्रमांक</TableCell>
-                <TableCell>Date<br/>तारीख</TableCell>
-                <TableCell>Work Reason<br/>कामाचे कारण</TableCell>
-                <TableCell>Document Number<br/>दस्तऐवज क्रमांक</TableCell>
-                <TableCell>Estimated Cost<br/>अंदाजे किंमत</TableCell>
-                <TableCell>Advance Paid<br/>आगाऊ रक्कम</TableCell>
-                <TableCell>Remaining Amount<br/>बाकी रक्कम</TableCell>
-                <TableCell>Payment Method<br/>पैसे भरण्याची पद्धत</TableCell>
-                <TableCell>Actions<br/>क्रिया</TableCell>
+                <TableCell>Sr. No.<br/>क्रमांक<br/>1</TableCell>
+                <TableCell>Date<br/>तारीख<br/>2</TableCell>
+                <TableCell>Work Reason<br/>कामाचे कारण<br/>3</TableCell>
+                <TableCell>Document Number<br/>दस्तऐवज क्रमांक<br/>4</TableCell>
+                <TableCell>Estimated Cost<br/>अंदाजे किंमत<br/>5</TableCell>
+                <TableCell>Advance Paid<br/>आगाऊ रक्कम<br/>6</TableCell>
+                <TableCell>Remaining Amount<br/>बाकी रक्कम<br/>7</TableCell>
+                <TableCell>Payment Method<br/>पैसे भरण्याची पद्धत<br/>8</TableCell>
+                <TableCell>Actions<br/>क्रिया<br/>9</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {customerHistory.map((record, index) => (
                 <TableRow key={record.id}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{new Date(record.created_at).toLocaleString()}</TableCell>
+                  <TableCell>{new Date(record.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     {record.work_reason}<br/>
                     <span style={{ fontFamily: 'Noto Sans Devanagari', fontSize: '0.875rem', color: 'rgba(0, 0, 0, 0.7)' }}>
@@ -251,7 +256,7 @@ function CustomerDetails({ token }) {
                   </TableCell>
                   <TableCell>{record.payment_method || ''}</TableCell>
                   <TableCell>
-                    {record.mark === 'active' && record.amount_remaining > 0 && (
+                    {record.mark === 'active' && record.amount_remaining > 0 && role === 'superadmin' && (
                       <IconButton onClick={() => handleEditRecord(record)} title="Settle amount">
                         <Edit />
                       </IconButton>
@@ -279,6 +284,15 @@ function CustomerDetails({ token }) {
               fullWidth
               helperText="Enter the amount being paid now"
             />
+            <TextField
+              label="Settlement Date"
+              type="date"
+              value={settlementDate}
+              onChange={(e) => setSettlementDate(e.target.value)}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              helperText="Select the date for this settlement"
+            />
             <FormControl fullWidth>
               <InputLabel>Payment Method</InputLabel>
               <Select
@@ -298,7 +312,7 @@ function CustomerDetails({ token }) {
           <Button 
             onClick={handleSettlement} 
             variant="contained" 
-            disabled={!settlementAmount || !paymentMethod}
+            disabled={!settlementAmount || !paymentMethod || !settlementDate}
           >
             Settle
           </Button>
