@@ -143,34 +143,95 @@ function CustomerDetails({ token }) {
         <head>
           <title>Customer History - ${customerName}</title>
           <style>
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #1976d2; color: white; }
+            @media print {
+              body { margin: 0.5in; }
+            }
+            body { 
+              font-family: 'Arial', sans-serif; 
+              margin: 20px; 
+              color: #000;
+              background: white;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-top: 20px;
+              font-size: 12px;
+            }
+            th, td { 
+              border: 2px solid #333; 
+              padding: 8px 12px; 
+              text-align: center;
+              vertical-align: middle;
+            }
+            th { 
+              background-color: #1976d2 !important; 
+              color: white !important; 
+              font-weight: bold;
+              font-size: 11px;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            td {
+              background-color: white !important;
+              color: #000 !important;
+              font-weight: 500;
+            }
+            tr:nth-child(even) td { 
+              background-color: #f8f9fa !important;
+            }
+            .amount-cell {
+              font-family: 'Courier New', monospace;
+              font-weight: bold;
+              text-align: right;
+              color: #000 !important;
+              font-size: 13px;
+            }
+            .remaining-amount {
+              color: #d32f2f !important;
+              font-weight: bold;
+            }
+            h2 { 
+              color: #1976d2; 
+              margin-bottom: 10px;
+              text-align: center;
+              font-size: 24px;
+            }
+            .print-info { 
+              color: #666; 
+              font-size: 12px; 
+              margin-bottom: 20px;
+              text-align: center;
+            }
+            .sr-no { font-weight: bold; }
           </style>
         </head>
         <body>
           <h2>Customer History - ${customerName}</h2>
+          <div class="print-info">Generated on: ${new Date().toLocaleString()}</div>
           <table>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Work Reason</th>
-                <th>Document Number</th>
-                <th>Estimated Cost</th>
-                <th>Advance Paid</th>
-                <th>Remaining</th>
-                <th>Payment Method</th>
+                <th>Sr. No.<br/>क्रमांक</th>
+                <th>Date<br/>तारीख</th>
+                <th>Work Reason<br/>कामाचे कारण</th>
+                <th>Document Number<br/>दस्तऐवज क्रमांक</th>
+                <th>Estimated Cost<br/>अंदाजे किंमत</th>
+                <th>Advance Paid<br/>आगाऊ रक्कम</th>
+                <th>Remaining Amount<br/>बाकी रक्कम</th>
+                <th>Payment Method<br/>पैसे भरण्याची पद्धत</th>
               </tr>
             </thead>
             <tbody>
-              ${customerHistory.map(record => `
+              ${customerHistory.map((record, index) => `
                 <tr>
-                  <td>${new Date(record.created_at).toLocaleString()}</td>
+                  <td class="sr-no">${index + 1}</td>
+                  <td>${new Date(record.created_at).toLocaleDateString()}</td>
                   <td>${record.work_reason || ''}</td>
                   <td>${record.document_number || ''}</td>
-                  <td>₹${parseFloat(record.estimated_cost || 0).toFixed(2)}</td>
-                  <td>₹${parseFloat(record.advance_paid || 0).toFixed(2)}</td>
-                  <td>₹${parseFloat(record.amount_remaining || 0).toFixed(2)}</td>
+                  <td class="amount-cell">₹${Number(record.estimated_cost || 0).toLocaleString()}</td>
+                  <td class="amount-cell">₹${Number(record.advance_paid || 0).toLocaleString()}</td>
+                  <td class="amount-cell remaining-amount">₹${Number(record.amount_remaining || 0).toLocaleString()}</td>
                   <td>${record.payment_method || ''}</td>
                 </tr>
               `).join('')}
@@ -181,6 +242,7 @@ function CustomerDetails({ token }) {
     `;
     printWindow.document.write(htmlContent);
     printWindow.document.close();
+    printWindow.print();
   };
 
   if (loading) {
@@ -221,15 +283,15 @@ function CustomerDetails({ token }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Sr. No.<br/>क्रमांक<br/>1</TableCell>
-                <TableCell>Date<br/>तारीख<br/>2</TableCell>
-                <TableCell>Work Reason<br/>कामाचे कारण<br/>3</TableCell>
-                <TableCell>Document Number<br/>दस्तऐवज क्रमांक<br/>4</TableCell>
-                <TableCell>Estimated Cost<br/>अंदाजे किंमत<br/>5</TableCell>
-                <TableCell>Advance Paid<br/>आगाऊ रक्कम<br/>6</TableCell>
-                <TableCell>Remaining Amount<br/>बाकी रक्कम<br/>7</TableCell>
-                <TableCell>Payment Method<br/>पैसे भरण्याची पद्धत<br/>8</TableCell>
-                <TableCell>Actions<br/>क्रिया<br/>9</TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Sr. No.<br/>क्रमांक<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>1</div></TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Date<br/>तारीख<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>2</div></TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Work Reason<br/>कामाचे कारण<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>3</div></TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Document Number<br/>दस्तऐवज क्रमांक<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>4</div></TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Estimated Cost<br/>अंदाजे किंमत<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>5</div></TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Advance Paid<br/>आगाऊ रक्कम<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>6</div></TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Remaining Amount<br/>बाकी रक्कम<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>7</div></TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Payment Method<br/>पैसे भरण्याची पद्धत<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>8</div></TableCell>
+                <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Actions<br/>क्रिया<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>9</div></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

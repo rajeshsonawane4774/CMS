@@ -37,7 +37,8 @@ def customer_to_dict(customer):
         'unique_id': customer.unique_id,
         'created_at': customer.created_at.isoformat() if customer.created_at else None,
         'modified_at': customer.modified_at.isoformat() if customer.modified_at else None,
-        'mark': customer.mark
+        'mark': customer.mark,
+        'status': customer.status
     }
 
 @customers_bp.route('/customers', methods=['GET'])
@@ -135,7 +136,8 @@ def add_customer():
         payment_method=data.get('payment_method', ''),
         unique_id=unique_id,
         created_at=created_at,
-        modified_at=None
+        modified_at=None,
+        status=data.get('status', 'pending')
     )
     
     db.session.add(customer)
@@ -184,7 +186,7 @@ def update_customer(id):
             settlement_time = current_time
         
         # Create new payment history record with unique ID
-        new_unique_id = f"{old_customer.unique_id}_payment_{settlement_time.strftime('%Y%m%d%H%M%S')}"
+        new_unique_id = f"{old_customer.document_number or old_customer.id}_pay_{settlement_time.strftime('%Y%m%d%H%M%S')}"
         
         payment_record = Customer(
             name=old_customer.name,
@@ -207,7 +209,8 @@ def update_customer(id):
             created_at=settlement_time,
             modified_at=None,
             mark='active',
-            parent_id=old_customer.id
+            parent_id=old_customer.id,
+            status=old_customer.status
         )
         
         # Mark the old record as history
@@ -244,6 +247,7 @@ def update_customer(id):
         old_customer.work_reason = data.get('work_reason', old_customer.work_reason)
         old_customer.work_reason_mr = data.get('work_reason_mr', old_customer.work_reason_mr)
         old_customer.payment_method = data.get('payment_method', old_customer.payment_method)
+        old_customer.status = data.get('status', old_customer.status)
         old_customer.modified_at = current_time
         
         db.session.commit()
@@ -328,19 +332,64 @@ def get_outstanding_names():
         Customer.mark == 'active'
     ).all()
 
-    # Format the data for the pie chart with all necessary fields
-    result = [{
-        'name': customer.name,
-        'work_reason': customer.work_reason,
-        'amount_remaining': float(customer.amount_remaining),
-        'created_at': customer.created_at.isoformat(),
-        'modified_at': customer.modified_at.isoformat() if customer.modified_at else None,
-        'mark': customer.mark,
-        'phone': customer.phone,
-        'estimated_cost': float(customer.estimated_cost) if customer.estimated_cost is not None else 0
-    } for customer in customers]
+    # Format the data with last settlement date
+    result = []
+    for customer in customers:
+        # Find the last settlement date for this customer by document number
+        last_settlement = None
+        if customer.document_number:
+            # Get all records for this document number, ordered by created_at desc
+            all_records = Customer.query.filter(
+                Customer.document_number == customer.document_number
+            ).order_by(Customer.created_at.desc()).all()
+            
+            # Find the most recent record (which should be the last settlement)
+            if all_records:
+                last_settlement = all_records[0].created_at.isoformat()
+        
+        result.append({
+            'name': customer.name,
+            'work_reason': customer.work_reason,
+            'amount_remaining': float(customer.amount_remaining),
+            'created_at': customer.created_at.isoformat(),
+            'modified_at': customer.modified_at.isoformat() if customer.modified_at else None,
+            'last_settlement_date': last_settlement,
+            'mark': customer.mark,
+            'phone': customer.phone,
+            'estimated_cost': float(customer.estimated_cost) if customer.estimated_cost is not None else 0
+        })
 
     return jsonify(result)
+
+@customers_bp.route('/customers/status-stats', methods=['GET'])
+def get_status_stats():
+    token = request.headers.get('Authorization')
+    if not token or len(token.split()) != 2:
+        return jsonify({'error': 'Authorization header missing or invalid'}), 401
+    token = token.split()[1]
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'Invalid or expired token'}), 401
+
+    try:
+        # Get status distribution
+        status_data = db.session.query(
+            Customer.status,
+            func.count(Customer.id).label('count')
+        ).filter(
+            Customer.mark == 'active'
+        ).group_by(
+            Customer.status
+        ).all()
+
+        result = [{
+            'status': data.status or 'pending',
+            'count': data.count
+        } for data in status_data]
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @customers_bp.route('/customers/payment-stats', methods=['GET'])
 def get_payment_stats():

@@ -22,11 +22,12 @@ class Customer(db.Model):
     work_reason = db.Column(db.Text)
     work_reason_mr = db.Column(db.Text)
     payment_method = db.Column(db.String(50))
-    unique_id = db.Column(db.String(100), unique=True, nullable=False)
+    unique_id = db.Column(db.String(200), unique=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     modified_at = Column(DateTime, onupdate=datetime.utcnow, nullable=True)
     mark = db.Column(db.String(20), default='active')
     parent_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=True)
+    status = db.Column(db.String(20), default='pending')
     
     def generate_unique_id(self):
         timestamp = datetime.utcnow().strftime('%Y%m%d%H%M%S')

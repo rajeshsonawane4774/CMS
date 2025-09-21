@@ -38,6 +38,15 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
     print("Table 'customers' created successfully (or already exists).")
+    
+    # Ensure status column exists
+    try:
+        from sqlalchemy import text
+        db.engine.execute(text("ALTER TABLE customers ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'"))
+        db.engine.execute(text("UPDATE customers SET status = 'pending' WHERE status IS NULL"))
+        print("Status column ensured.")
+    except Exception as e:
+        print(f"Status column setup: {e}")
 
 # Register Blueprints for API routes
 app.register_blueprint(auth_bp, url_prefix='/api')

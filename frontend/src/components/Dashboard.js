@@ -46,7 +46,7 @@ import PropTypes from 'prop-types';
 import dayjs from 'dayjs';
 import '../styles/Dashboard.css';
 import { fieldTranslations } from '../constants/translations';
-import OutstandingAmountChart from './charts/OutstandingAmountChart';
+
 
 function Dashboard({ token, role, onLogout }) {
   const navigate = useNavigate();
@@ -91,10 +91,12 @@ function Dashboard({ token, role, onLogout }) {
     work_reason: '',
     work_reason_mr: '',
     payment_method: '',
-    created_date: ''
+    created_date: '',
+    status: 'pending'
   });
   const [error, setError] = useState(null);
   const [showMonthlyChart, setShowMonthlyChart] = useState(false);
+
 
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -121,6 +123,8 @@ function Dashboard({ token, role, onLogout }) {
     };
     fetchCustomers();
   }, [token, startDate, endDate]);
+
+
 
   // No need for chart data fetching useEffect as we're using the customers data directly
 
@@ -162,7 +166,8 @@ function Dashboard({ token, role, onLogout }) {
         work_reason: customer.work_reason,
         work_reason_mr: customer.work_reason_mr || '',
         payment_method: customer.payment_method,
-        created_date: customer.created_at ? dayjs(customer.created_at).format('YYYY-MM-DD') : ''
+        created_date: customer.created_at ? dayjs(customer.created_at).format('YYYY-MM-DD') : '',
+        status: customer.status || 'pending'
       });
     } else {
       setFormData({
@@ -182,7 +187,8 @@ function Dashboard({ token, role, onLogout }) {
         work_reason: '',
         work_reason_mr: '',
         payment_method: '',
-        created_date: ''
+        created_date: '',
+        status: 'pending'
       });
     }
     setOpenDialog(true);
@@ -557,33 +563,34 @@ function Dashboard({ token, role, onLogout }) {
             <Table sx={{ minWidth: 800, width: '100%', tableLayout: 'auto' }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Sr. No<br/>क्रमांक<br/>1</TableCell>
-                  <TableCell>{fieldTranslations.name.en}<br/>{fieldTranslations.name.mr}<br/>2</TableCell>
-                  <TableCell>{fieldTranslations.phone.en}<br/>{fieldTranslations.phone.mr}<br/>3</TableCell>
-                  <TableCell>{fieldTranslations.village.en}<br/>{fieldTranslations.village.mr}<br/>4</TableCell>
-                  <TableCell>CTS/Plot/GAT<br/>सीटीएस/प्लॉट/गट<br/>5</TableCell>
-                  <TableCell>{fieldTranslations.document_number.en}<br/>{fieldTranslations.document_number.mr}<br/>6</TableCell>
-                  <TableCell>{fieldTranslations.submitted_by.en}<br/>{fieldTranslations.submitted_by.mr}<br/>7</TableCell>
-                  <TableCell>{fieldTranslations.cost.en}<br/>{fieldTranslations.cost.mr}<br/>8</TableCell>
-                  <TableCell>{fieldTranslations.advance.en}<br/>{fieldTranslations.advance.mr}<br/>9</TableCell>
-                  <TableCell>{fieldTranslations.remaining.en}<br/>{fieldTranslations.remaining.mr}<br/>10</TableCell>
-                  <TableCell>{fieldTranslations.reason.en}<br/>{fieldTranslations.reason.mr}<br/>11</TableCell>
-                  <TableCell>{fieldTranslations.payment.en}<br/>{fieldTranslations.payment.mr}<br/>12</TableCell>
-                  <TableCell>Modified Date<br/>13</TableCell>
-                  <TableCell>Created Date<br/>14</TableCell>
-                  <TableCell>{fieldTranslations.actions.en}<br/>{fieldTranslations.actions.mr}<br/>15</TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Sr.<br/>No<br/>क्रमांक<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>1</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>{fieldTranslations.name.en}<br/>{fieldTranslations.name.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>2</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>{fieldTranslations.phone.en}<br/>{fieldTranslations.phone.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>3</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>{fieldTranslations.village.en}<br/>{fieldTranslations.village.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>4</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>CTS/Plot/GAT<br/>सीटीएस/प्लॉट/गट<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>5</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Document<br/>Number<br/>{fieldTranslations.document_number.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>6</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Submitted<br/>By<br/>{fieldTranslations.submitted_by.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>7</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Estimated<br/>Cost<br/>{fieldTranslations.cost.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>8</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Advance<br/>{fieldTranslations.advance.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>9</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Remaining<br/>{fieldTranslations.remaining.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>10</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Work<br/>Reason<br/>{fieldTranslations.reason.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>11</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Payment<br/>Method<br/>{fieldTranslations.payment.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>12</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Modified<br/>Date<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>13</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Created<br/>Date<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>14</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Status<br/>स्थिती<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>15</div></TableCell>
+                  <TableCell sx={{ textAlign: 'center', verticalAlign: 'middle' }}>Action<br/>{fieldTranslations.actions.mr}<br/><div style={{fontSize: '0.75rem', color: '#fff', fontWeight: 'bold'}}>16</div></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={16} align="center">
+                    <TableCell colSpan={17} align="center">
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
                 ) : filteredCustomers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={16} align="center">
+                    <TableCell colSpan={17} align="center">
                       No customers found
                     </TableCell>
                   </TableRow>
@@ -620,6 +627,18 @@ function Dashboard({ token, role, onLogout }) {
                       <TableCell>{customer.payment_method}</TableCell>
                       <TableCell>{customer.modified_at ? new Date(customer.modified_at).toLocaleString() : ''}</TableCell>
                       <TableCell>{customer.created_at ? new Date(customer.created_at).toLocaleString() : ''}</TableCell>
+                      <TableCell>
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          backgroundColor: customer.status === 'done' ? '#4caf50' : '#ff9800',
+                          color: 'white'
+                        }}>
+                          {customer.status || 'pending'}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <IconButton onClick={(e) => { e.stopPropagation(); navigate(`/customer/${customer.id}?docNumber=${encodeURIComponent(customer.document_number || '')}&name=${encodeURIComponent(customer.name)}`); }} title="View document payment history">
                           <Visibility />
@@ -884,6 +903,24 @@ function Dashboard({ token, role, onLogout }) {
                 </FormControl>
               </Box>
 
+              {/* Status Section */}
+              <Box className="field-section">
+                <Typography variant="subtitle1" gutterBottom>
+                  Work Status / कामाची स्थिती
+                </Typography>
+                <FormControl fullWidth margin="normal">
+                  <InputLabel>Work Status / कामाची स्थिती</InputLabel>
+                  <Select
+                    value={formData.status}
+                    onChange={(e) => handleFormChange('status', e.target.value)}
+                    label="Work Status / कामाची स्थिती"
+                  >
+                    <MenuItem value="pending">Pending / प्रलंबित</MenuItem>
+                    <MenuItem value="done">Done / पूर्ण</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+
               {/* Created Date Section */}
               <Box className="field-section">
                 <Typography variant="subtitle1" gutterBottom>
@@ -916,218 +953,173 @@ function Dashboard({ token, role, onLogout }) {
             left: 0, 
             width: '100vw', 
             height: '100vh', 
-            bgcolor: '#f5f5f5', 
+            bgcolor: '#f6f8fa', 
             zIndex: 9999,
             overflow: 'auto'
           }}>
-            <AppBar position="static" sx={{ bgcolor: 'primary.main' }}>
-              <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h6">Analytics Dashboard</Typography>
-                <IconButton 
+            <AppBar position="static" sx={{ mb: 3, boxShadow: '0 8px 32px 0 rgba(35, 69, 103, 0.22)' }}>
+              <Toolbar sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                minHeight: 80,
+                px: 2
+              }}>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Analytics Dashboard - Customer Manager
+                </Typography>
+                <Button 
+                  variant="contained"
                   onClick={() => setShowMonthlyChart(false)}
-                  sx={{ color: 'white' }}
+                  startIcon={<Close />}
+                  className="uniform-button"
                 >
-                  <Close />
-                </IconButton>
+                  Back to Dashboard
+                </Button>
               </Toolbar>
             </AppBar>
-            <Box sx={{ p: 3 }}>
-            <Grid container spacing={3}>
-              {/* Left side - Customer Details */}
-              <Grid item xs={12} md={6}>
-                <Paper sx={{ p: 3, height: '100%', boxShadow: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    Outstanding Amounts by Customer
-                    <Typography variant="body2" color="textSecondary">
-{(() => {
-                        const uniqueEntries = {};
-                        customers.forEach(customer => {
-                          if (customer.mark === 'active' && customer.amount_remaining > 0) {
-                            const docNum = customer.document_number || '';
-                            const workReason = customer.work_reason || '';
-                            const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
-                            
-                            if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
-                              uniqueEntries[key] = customer;
-                            }
-                          }
-                        });
-                        return Object.keys(uniqueEntries).length;
-                      })()} Customers
-                    </Typography>
+            <Box sx={{ p: 3, maxWidth: '100%' }}>
+            {/* Outstanding Amounts Table - Full Width */}
+            <Paper elevation={3} sx={{ mb: 4, borderRadius: 3, overflow: 'hidden' }}>
+              <Box sx={{ p: 3, bgcolor: '#1976d2', color: 'white' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  Outstanding Amounts by Customer
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)' }}>
+                    {filteredCustomers.filter(c => c.amount_remaining > 0).length} Customers with Pending Amounts
                   </Typography>
-                  <TableContainer sx={{ maxHeight: 'calc(100vh - 250px)', overflow: 'auto' }}>
-                    <Table stickyHeader size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }}>Customer Name</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }}>Work Reason</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }}>Phone Number</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }} align="right">Estimated Cost (₹)</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }} align="right">Remaining Amount (₹)</TableCell>
+                </Typography>
+              </Box>
+              <TableContainer sx={{ maxHeight: '400px', overflow: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Sr. No.</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Customer Name</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Work Reason</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Phone Number</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Document Number</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Estimated Cost (₹)</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Advance Paid (₹)</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Remaining Amount (₹)</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', bgcolor: '#1976d2', color: 'white', textAlign: 'center', padding: '8px 16px' }}>Created Date</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredCustomers
+                      .filter(c => c.amount_remaining > 0)
+                      .sort((a, b) => b.amount_remaining - a.amount_remaining)
+                      .map((customer, index) => (
+                        <TableRow 
+                          key={index} 
+                          hover 
+                          sx={{ 
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: '#f5f5f5' },
+                            '&:nth-of-type(even)': { backgroundColor: '#fafafa' }
+                          }}
+                          onClick={() => navigate(`/customer/${customer.id}?docNumber=${encodeURIComponent(customer.document_number || '')}&name=${encodeURIComponent(customer.name)}`)}
+                        >
+                          <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>{customer.name}</TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>{customer.work_reason}</TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>{customer.phone}</TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>{customer.document_number}</TableCell>
+                          <TableCell sx={{ textAlign: 'center', fontFamily: 'monospace' }}>₹{Number(customer.estimated_cost).toLocaleString('en-IN')}</TableCell>
+                          <TableCell sx={{ textAlign: 'center', fontFamily: 'monospace' }}>₹{Number(customer.advance_paid).toLocaleString('en-IN')}</TableCell>
+                          <TableCell sx={{ textAlign: 'center', color: '#f44336', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                            ₹{Number(customer.amount_remaining).toLocaleString('en-IN')}
+                          </TableCell>
+                          <TableCell sx={{ textAlign: 'center' }}>{new Date(customer.created_at).toLocaleDateString()}</TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {(() => {
-                          // Get unique entries with outstanding amounts
-                          const uniqueEntries = {};
-                          customers.forEach(customer => {
-                            if (customer.mark === 'active' && customer.amount_remaining > 0) {
-                              const docNum = customer.document_number || '';
-                              const workReason = customer.work_reason || '';
-                              const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
-                              
-                              if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
-                                uniqueEntries[key] = customer;
-                              }
-                            }
-                          });
-                          
-                          return Object.values(uniqueEntries)
-                            .sort((a, b) => b.amount_remaining - a.amount_remaining)
-                            .map((customer) => (
-                            <TableRow key={customer.id} hover>
-                              <TableCell>{customer.name}</TableCell>
-                              <TableCell>{customer.work_reason}</TableCell>
-                              <TableCell>{customer.phone}</TableCell>
-                              <TableCell align="right">₹{Number(customer.estimated_cost).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
-                              <TableCell align="right" sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                                ₹{Number(customer.amount_remaining).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                              </TableCell>
-                            </TableRow>
-                          ));
-                        })()}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-              </Grid>
+                      ))
+                    }
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
 
-              {/* Right side - Summary and Chart */}
-              <Grid item xs={12} md={6}>
-                <Grid container spacing={4}>
-                  <Grid item xs={12} sx={{ mt: 2 }}>
-                    <Paper className="summary-section" elevation={3}>
-                      <div className="table-section-header">
-                        <div className="table-title">
-                          Summary by Work Type
-                          <span className="customer-count">
-  Total Categories: {(() => {
-                            const uniqueEntries = {};
-                            customers.forEach(customer => {
-                              if (customer.mark === 'active') {
-                                const docNum = customer.document_number || '';
-                                const workReason = customer.work_reason || '';
-                                const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
-                                
-                                if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
-                                  uniqueEntries[key] = customer;
-                                }
-                              }
-                            });
-                            return Object.keys(Object.values(uniqueEntries).reduce((acc, curr) => ({ ...acc, [curr.work_reason]: true }), {})).length;
-                          })()}
-                          </span>
-                        </div>
-                      </div>
-                      <TableContainer>
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Work Type</TableCell>
-                              <TableCell>Total Amount (₹)</TableCell>
-                              <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }} align="right">Pending Amount (₹)</TableCell>
-                              <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.paper' }} align="right">Customers</TableCell>
+            {/* Work Status Distribution - Full Width */}
+            <Paper elevation={3} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+              <Box sx={{ p: 3, bgcolor: '#1976d2', color: 'white' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Work Status Distribution
+                </Typography>
+              </Box>
+              <Grid container>
+
+                {/* Pending Customers */}
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ p: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 2, color: '#ff9800', fontWeight: 'bold' }}>Pending Work ({filteredCustomers.filter(c => c.status === 'pending').length})</Typography>
+                    <TableContainer sx={{ maxHeight: '400px', overflow: 'auto', border: '1px solid #e0e0e0', borderRadius: 2, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+                      <Table stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fff3e0', textAlign: 'center', padding: '8px 16px' }}>Sr. No.</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fff3e0', textAlign: 'center', padding: '8px 16px' }}>Customer Name</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fff3e0', textAlign: 'center', padding: '8px 16px' }}>Work Reason</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fff3e0', textAlign: 'center', padding: '8px 16px' }}>Phone</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#fff3e0', textAlign: 'center', padding: '8px 16px' }}>Date</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {filteredCustomers.filter(c => c.status === 'pending').map((customer, index) => (
+                            <TableRow 
+                              key={index} 
+                              hover 
+                              sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#fff8e1' } }}
+                              onClick={() => navigate(`/customer/${customer.id}?docNumber=${encodeURIComponent(customer.document_number || '')}&name=${encodeURIComponent(customer.name)}`)}
+                            >
+                              <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>{customer.name}</TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>{customer.work_reason}</TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>{customer.phone}</TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>{new Date(customer.created_at).toLocaleDateString()}</TableCell>
                             </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {(() => {
-                              // Get unique entries for summary
-                              const uniqueEntries = {};
-                              customers.forEach(customer => {
-                                if (customer.mark === 'active') {
-                                  const docNum = customer.document_number || '';
-                                  const workReason = customer.work_reason || '';
-                                  const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
-                                  
-                                  if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
-                                    uniqueEntries[key] = customer;
-                                  }
-                                }
-                              });
-                              
-                              const workReasonSummary = {};
-                              Object.values(uniqueEntries).forEach(customer => {
-                                if (!workReasonSummary[customer.work_reason]) {
-                                  workReasonSummary[customer.work_reason] = {
-                                    totalAmount: 0,
-                                    pendingAmount: 0,
-                                    customerCount: 0
-                                  };
-                                }
-                                workReasonSummary[customer.work_reason].totalAmount += Number(customer.estimated_cost);
-                                workReasonSummary[customer.work_reason].pendingAmount += Number(customer.amount_remaining);
-                                workReasonSummary[customer.work_reason].customerCount++;
-                              });
-                              
-                              return Object.entries(workReasonSummary)
-                                .sort((a, b) => b[1].pendingAmount - a[1].pendingAmount)
-                                .map(([workReason, data]) => (
-                                  <TableRow key={workReason} hover>
-                                    <TableCell>{workReason}</TableCell>
-                                    <TableCell align="right">₹{data.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
-                                    <TableCell align="right" sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                                      ₹{data.pendingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                                    </TableCell>
-                                    <TableCell align="right">{data.customerCount}</TableCell>
-                                  </TableRow>
-                                ));
-                            })()}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Paper sx={{ p: 3, boxShadow: 3 }}>
-                      <Typography variant="h6" sx={{ mb: 2 }}>Outstanding Distribution</Typography>
-                      <OutstandingAmountChart
-                        data={(() => {
-                          // Get unique entries with outstanding amounts
-                          const uniqueEntries = {};
-                          customers.forEach(customer => {
-                            if (customer.mark === 'active' && customer.amount_remaining > 0) {
-                              const docNum = customer.document_number || '';
-                              const workReason = customer.work_reason || '';
-                              const key = docNum ? `${docNum}_${workReason}` : `${customer.name}_${workReason}_${customer.created_at}`;
-                              
-                              if (!uniqueEntries[key] || new Date(customer.created_at) > new Date(uniqueEntries[key].created_at)) {
-                                uniqueEntries[key] = customer;
-                              }
-                            }
-                          });
-                          
-                          const workReasonSummary = {};
-                          Object.values(uniqueEntries).forEach(customer => {
-                            if (!workReasonSummary[customer.work_reason]) {
-                              workReasonSummary[customer.work_reason] = 0;
-                            }
-                            workReasonSummary[customer.work_reason] += Number(customer.amount_remaining);
-                          });
-                          
-                          return Object.entries(workReasonSummary)
-                            .sort((a, b) => b[1] - a[1])
-                            .map(([name, amount]) => ({
-                              name,
-                              amount
-                            }));
-                        })()}
-                      />
-                    </Paper>
-                  </Grid>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                </Grid>
+                
+                {/* Done Customers */}
+                <Grid item xs={12} md={6}>
+                  <Box sx={{ p: 3 }}>
+                    <Typography variant="h6" sx={{ mb: 2, color: '#4caf50', fontWeight: 'bold' }}>Completed Work ({filteredCustomers.filter(c => c.status === 'done').length})</Typography>
+                    <TableContainer sx={{ maxHeight: '400px', overflow: 'auto', border: '1px solid #e0e0e0', borderRadius: 2, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+                      <Table stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#e8f5e8', textAlign: 'center', padding: '8px 16px' }}>Sr. No.</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#e8f5e8', textAlign: 'center', padding: '8px 16px' }}>Customer Name</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#e8f5e8', textAlign: 'center', padding: '8px 16px' }}>Work Reason</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#e8f5e8', textAlign: 'center', padding: '8px 16px' }}>Phone</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold', bgcolor: '#e8f5e8', textAlign: 'center', padding: '8px 16px' }}>Date</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {filteredCustomers.filter(c => c.status === 'done').map((customer, index) => (
+                            <TableRow 
+                              key={index} 
+                              hover 
+                              sx={{ cursor: 'pointer', '&:hover': { backgroundColor: '#f1f8e9' } }}
+                              onClick={() => navigate(`/customer/${customer.id}?docNumber=${encodeURIComponent(customer.document_number || '')}&name=${encodeURIComponent(customer.name)}`)}
+                            >
+                              <TableCell sx={{ textAlign: 'center', fontWeight: 'bold' }}>{index + 1}</TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>{customer.name}</TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>{customer.work_reason}</TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>{customer.phone}</TableCell>
+                              <TableCell sx={{ textAlign: 'center' }}>{new Date(customer.created_at).toLocaleDateString()}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
                 </Grid>
               </Grid>
-            </Grid>
+            </Paper>
             </Box>
           </Box>
         )}
